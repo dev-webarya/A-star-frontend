@@ -506,7 +506,7 @@ export const blogApi = {
 
     async startSubscription(payload: Record<string, unknown>) {
         try {
-            return await request<Record<string, unknown>>('/api/blogs/subscriptions/start', {
+            return await request<Record<string, unknown>>('/api/blogs/subscriptions/otp', {
                 method: 'POST',
                 body: JSON.stringify(payload),
             });
@@ -517,7 +517,7 @@ export const blogApi = {
 
     async verifySubscription(payload: Record<string, unknown>) {
         try {
-            return await request<Record<string, unknown>>('/api/blogs/subscriptions/verify', {
+            return await request<Record<string, unknown>>('/api/blogs/subscriptions/start', {
                 method: 'POST',
                 body: JSON.stringify(payload),
             });
@@ -550,7 +550,7 @@ export const blogApi = {
 
     async unsubscribe(payload: Record<string, unknown>) {
         try {
-            return await request<Record<string, unknown>>('/api/blogs/subscriptions/unsubscribe', {
+            return await request<Record<string, unknown>>('/api/blogs/subscriptions/stop', {
                 method: 'POST',
                 body: JSON.stringify(payload),
             });
