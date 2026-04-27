@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: astar_frontend
+    ports:
+      # Exposes internal serve port 4173 to the requested external port 9015
+      - "9015:4173"
+    env_file:
+      - .env
+    restart: unless-stopped
