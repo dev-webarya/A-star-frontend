@@ -50,7 +50,7 @@ const Signup = () => {
 
     setIsSubmitting(true);
     try {
-      const result = await requestOtp(email.trim());
+      const result = await requestOtp(email.trim(), false);
       if (!result.success) {
         setErrors({ form: result.message || "Unable to send OTP. Please try again." });
       } else {
@@ -99,7 +99,7 @@ const Signup = () => {
     setMessage("");
     setIsSubmitting(true);
     try {
-      const result = await requestOtp(email.trim());
+      const result = await requestOtp(email.trim(), true); // This is an explicit resend
       if (!result.success) {
         setErrors({ form: result.message || "Unable to resend OTP. Please try again." });
       } else {

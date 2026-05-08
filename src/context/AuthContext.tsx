@@ -25,7 +25,7 @@ type AuthContextValue = {
     login: (email: string, password: string) => Promise<AuthResult>;
     signup: (fullName: string, email: string, phone: string, password: string) => AuthResult;
     logout: () => void;
-    requestOtp: (email: string) => Promise<{ success: boolean; message: string }>;
+    requestOtp: (email: string, isResend?: boolean) => Promise<{ success: boolean; message: string }>;
     verifyOtp: (email: string, otp: string, name?: string, mobile?: string) => Promise<AuthResult>;
 };
 
@@ -80,9 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const requestOtp = async (email: string) => {
+    const requestOtp = async (email: string, isResend: boolean = false) => {
         try {
-            const result = await requestUserOTP(email);
+            const result = await requestUserOTP(email, isResend);
             return { success: true, message: result.message || 'OTP sent successfully' };
         } catch (error: any) {
             return { success: false, message: error.message || 'Failed to send OTP' };

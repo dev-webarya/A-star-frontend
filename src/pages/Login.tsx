@@ -65,7 +65,7 @@ const Login = () => {
     if (Object.keys(validationErrors).length > 0) return;
 
     setIsSubmitting(true);
-    const result = await requestOtp(email.trim());
+    const result = await requestOtp(email.trim(), false);
     setIsSubmitting(false);
 
     if (!result.success) {

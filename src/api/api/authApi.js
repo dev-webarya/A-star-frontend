@@ -5,9 +5,9 @@ import api from './api';
  */
 
 // Step 1: Request OTP
-export const requestUserOTP = async (email) => {
+export const requestUserOTP = async (email, isResend = false) => {
   try {
-    const response = await api.post('/api/auth/start', { email });
+    const response = await api.post('/api/auth/start', { email, isResend });
     return response.data;
   } catch (error) {
     throw error.response?.data || error;

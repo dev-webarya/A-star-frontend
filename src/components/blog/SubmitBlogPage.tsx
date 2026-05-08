@@ -459,7 +459,7 @@ export const SubmitBlogPage = () => {
                     <Mail className="w-12 h-12 mx-auto text-text-tertiary mb-3" />
                     <h2 className="text-xl font-bold text-text-primary mb-1">Verify Your Email</h2>
                     <p className="text-text-secondary mb-2 text-sm">OTP sent to <strong>{formData.authorEmail}</strong></p>
-                    <p className="text-xs text-text-tertiary mb-6 bg-bg-secondary rounded p-2">📌 Dev OTP: <strong>123456</strong></p>
+                    {/* <p className="text-xs text-text-tertiary mb-6 bg-bg-secondary rounded p-2">📌 Dev OTP: <strong>123456</strong></p> */}
                     <form onSubmit={handleStep2} className="max-w-xs mx-auto space-y-4">
                         <Input placeholder="Enter 6-digit OTP" value={otp} onChange={(e: ChangeEvent<HTMLInputElement>) => setOtp(e.target.value)}
                             className="text-center text-xl tracking-widest" maxLength={6} required />

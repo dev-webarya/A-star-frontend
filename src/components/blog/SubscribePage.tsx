@@ -106,7 +106,7 @@ export const SubscribePage = () => {
                     <Mail className="w-10 h-10 mx-auto text-text-tertiary mb-3" />
                     <h2 className="text-lg font-bold text-text-primary mb-1">Verify Your Email</h2>
                     <p className="text-text-secondary text-sm mb-2">Enter OTP sent to <strong>{email}</strong></p>
-                    <p className="text-xs text-text-tertiary mb-5 bg-bg-secondary rounded p-2">📌 Dev OTP: <strong>123456</strong></p>
+                    {/* <p className="text-xs text-text-tertiary mb-5 bg-bg-secondary rounded p-2">📌 Dev OTP: <strong>123456</strong></p> */}
                     <form onSubmit={handleVerify} className="max-w-xs mx-auto space-y-4">
                         <Input placeholder="Enter OTP" value={otp} onChange={(e: ChangeEvent<HTMLInputElement>) => setOtp(e.target.value)} className="text-center text-xl tracking-widest" maxLength={6} required />
                         <Button type="submit" disabled={loading} className="w-full">{loading ? 'Verifying...' : 'Verify & Activate'}</Button>
