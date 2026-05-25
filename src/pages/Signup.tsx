@@ -127,7 +127,7 @@ const Signup = () => {
     setMessage("");
     setIsSubmitting(true);
     try {
-      const result = await requestOtp(email.trim(), true); 
+      const result = await requestOtp(email.trim(), true);
       if (!result.success) {
         const errorMsg = result.message || "Unable to resend OTP. Please try again.";
         setErrors({ form: errorMsg });

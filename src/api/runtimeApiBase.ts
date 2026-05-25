@@ -1,6 +1,6 @@
 const API_BASE_URL = import.meta.env.DEV
-  ? window.location.origin
-  : (import.meta.env.VITE_API_BASE_URL || 'https://api.astarclasses.com').replace(/\/$/, '');
+    ? window.location.origin
+    : (import.meta.env.VITE_API_BASE_URL || 'https://api.astarclasses.com').replace(/\/$/, '');
 
 export type Primitive = string | number | boolean;
 export type QueryValue = Primitive | null | undefined;
