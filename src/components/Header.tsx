@@ -270,6 +270,13 @@ const Header = () => {
                 Ask
               </Link>
               <Link
+                to="/reviews"
+                onClick={() => setIsOpen(false)}
+                className="block text-gray-700 hover:text-blue-800 hover:bg-blue-50 font-medium px-2 py-2.5 rounded-lg text-sm transition-all"
+              >
+                Reviews
+              </Link>
+              <Link
                 to="/testimonials"
                 onClick={() => setIsOpen(false)}
                 className="block text-gray-700 hover:text-blue-800 hover:bg-blue-50 font-medium px-2 py-2.5 rounded-lg text-sm transition-all"

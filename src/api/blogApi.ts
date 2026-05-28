@@ -488,7 +488,7 @@ export const blogApi = {
                 body: JSON.stringify(payload),
             });
         } catch {
-            return { data: { success: true, otpSent: true, devOtp: '123456', email: payload.authorEmail } };
+            return { data: { success: true, otpSent: true, email: payload.authorEmail } };
         }
     },
 
@@ -499,11 +499,7 @@ export const blogApi = {
                 body: JSON.stringify(payload),
             });
         } catch {
-            const otp = String(payload.otp || '');
-            if (otp !== '123456') {
-                throw new ApiError('Invalid OTP. Use 123456 in local mode.', 400, { field: 'otp' });
-            }
-            return { data: { success: true, verified: true } };
+            throw new ApiError('Invalid OTP.', 400, { field: 'otp' });
         }
     },
 
@@ -552,7 +548,7 @@ export const blogApi = {
                 body: JSON.stringify(payload),
             });
         } catch {
-            return { data: { success: true, otpSent: true, devOtp: '123456', email: payload.email } };
+            return { data: { success: true, otpSent: true, email: payload.email } };
         }
     },
 
@@ -564,10 +560,7 @@ export const blogApi = {
                 body: JSON.stringify(payload),
             });
         } catch {
-            const otp = String(payload.otp || '');
-            if (otp !== '123456') {
-                throw new ApiError('Invalid OTP. Use 123456 in local mode.', 400, { field: 'otp' });
-            }
+            throw new ApiError('Invalid OTP.', 400, { field: 'otp' });
         }
 
         const email = String(payload.email || '').toLowerCase();

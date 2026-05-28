@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Star, Filter, X, Play, Video, Headphones, MessageCircle, ArrowRight, Image as ImageIcon, FileText, Plus, TrendingUp, Users } from 'lucide-react';
+import { Star, X, Video, Headphones, MessageCircle, Image as ImageIcon, FileText, Plus } from 'lucide-react';
 import { getApprovedTestimonials } from '../api/api/testimonialApi.js';
 import TestimonialFormModal from '../components/TestimonialFormModal';
 
@@ -135,11 +135,6 @@ const Testimonials = () => {
     setVisibleCount(prev => prev + 18);
   };
 
-  const primaryTestimonial = useMemo(() =>
-    testimonials.find(t => t.primary),
-    [testimonials]
-  );
-
   const filteredTestimonials = useMemo(() => {
     let filtered = testimonials.filter((t) => {
       const categoryMatch = selectedCategory === 'All' || t.category === selectedCategory;
@@ -147,13 +142,16 @@ const Testimonials = () => {
       return categoryMatch && typeMatch;
     });
 
-    // Explicitly remove the primary testimonial from the filtered list if it exists
-    if (primaryTestimonial) {
-      filtered = filtered.filter(t => t.id !== primaryTestimonial.id && t._id !== primaryTestimonial._id);
-    }
-    
+    // Sort: primary testimonial first, then the rest
+    filtered.sort((a, b) => {
+      if (a.primary && b.primary) return 0;
+      if (a.primary) return -1;
+      if (b.primary) return 1;
+      return 0;
+    });
+
     return filtered;
-  }, [testimonials, selectedCategory, selectedType, primaryTestimonial]);
+  }, [testimonials, selectedCategory, selectedType]);
 
   const paginatedTestimonials = filteredTestimonials.slice(0, visibleCount);
 
@@ -174,64 +172,6 @@ const Testimonials = () => {
           background: rgba(255, 107, 107, 0.9);
         }
       `}</style>
-
-      {/* Primary Testimonial Featured Section */}
-      {primaryTestimonial && (
-        <section className="pt-20 pb-10 bg-gradient-to-b from-blue-50 to-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-white rounded-[32px] shadow-2xl overflow-hidden border border-blue-100 flex flex-col md:flex-row items-stretch">
-              <div className="md:w-1/3 bg-blue-900 p-12 text-white flex flex-col justify-center relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/20 rounded-full -ml-12 -mb-12 blur-xl"></div>
-                
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm">
-                    <Star className="text-[#ffb800] fill-[#ffb800]" size={32} />
-                  </div>
-                  <h2 className="text-3xl font-black mb-2 uppercase tracking-tight leading-none">Featured Story</h2>
-                  <p className="text-blue-100 font-bold opacity-80 uppercase tracking-widest text-xs">A Star Achievement</p>
-                </div>
-              </div>
-              
-              <div className="md:w-2/3 p-12 flex flex-col justify-center">
-                <div className="flex items-center gap-1 mb-6">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={18} className="fill-[#ffb800] text-[#ffb800]" />
-                  ))}
-                  <span className="ml-3 text-sm font-black text-blue-900 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-wider">5/5 Rating</span>
-                </div>
-                
-                <blockquote className="text-2xl font-bold text-gray-900 mb-8 leading-tight italic">
-                  "{primaryTestimonial.text || primaryTestimonial.quote || primaryTestimonial.message || primaryTestimonial.content}"
-                </blockquote>
-                
-                <div className="flex items-center justify-between mt-auto pt-8 border-t border-gray-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-900 font-black text-xl shadow-inner">
-                      {(primaryTestimonial.name || primaryTestimonial.reviewerName || 'S')[0]}
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-black text-gray-900 leading-none">
-                        {primaryTestimonial.name || primaryTestimonial.reviewerName}
-                      </h4>
-                      <p className="text-blue-600 font-bold text-sm mt-1 uppercase tracking-widest">
-                        {primaryTestimonial.role || primaryTestimonial.category || 'Student'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <button 
-                    onClick={() => setActive(primaryTestimonial)}
-                    className="px-8 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/20 active:scale-95"
-                  >
-                    View Details
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Main Grid */}
       <section className="py-20">
@@ -332,6 +272,13 @@ const Testimonials = () => {
 
                       {/* Content Overlay */}
                       <div className="relative h-full flex flex-col p-6 pb-4 justify-between z-10">
+                        {/* Primary Badge */}
+                        {testimonial.primary && (
+                          <div className="absolute top-4 left-4 flex items-center gap-1 bg-[#ffb800] text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg z-20">
+                            <Star size={12} className="fill-white" />
+                            <span>Primary</span>
+                          </div>
+                        )}
                         {/* Media Icon Indicator - Subtle Glassmorphism for readability */}
                         <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center border border-white/20 group-hover:bg-[#FF6B6B] group-hover:border-[#FF6B6B] transition-all duration-300">
                           {mediaType === 'video' && <Video size={18} className="text-white" />}
