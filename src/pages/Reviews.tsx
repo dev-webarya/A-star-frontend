@@ -131,7 +131,7 @@ const Reviews = () => {
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                                 {reviews.map((review, index) => (
-                                    <div key={review.id || index} className="bg-white rounded-2xl md:rounded-[40px] border border-gray-100 shadow-2xl shadow-gray-200/50 flex flex-col h-fit overflow-hidden group hover:border-blue-100 transition-colors">
+                                    <div key={review.id || index} className="bg-white rounded-2xl md:rounded-[40px] border border-gray-100 shadow-2xl shadow-gray-200/50 flex flex-col h-full overflow-hidden group hover:border-blue-100 transition-colors">
                                         {/* Card Content Top */}
                                         <div className="p-4 sm:p-6 md:p-10 pb-6 text-left">
                                             <h3 className="text-2xl font-black text-[#1e3a8a] mb-1">{review.studentName}</h3>
@@ -150,12 +150,12 @@ const Reviews = () => {
                                                 DETAILED RATINGS <div className="flex-1 h-px bg-gray-200"></div>
                                             </h4>
                                             <div className="space-y-4">
-                                                {getRatingsArray(review).slice(0, 6).map((rating, idx) => (
-                                                    <div key={idx} className="flex justify-between items-start gap-4 group/item">
-                                                        <span className="text-[#444] text-[15px] font-black leading-tight group-hover/item:text-[#1e3a8a] transition-colors">
+                                                {getRatingsArray(review).map((rating, idx) => (
+                                                    <div key={idx} className="grid grid-cols-[1fr_auto] items-center gap-2 group/item">
+                                                        <span className="text-[#444] text-[15px] font-black leading-tight group-hover/item:text-[#1e3a8a] transition-colors text-left">
                                                             {rating.label}:
                                                         </span>
-                                                        <div className="flex gap-0.5 mt-1 shrink-0">
+                                                        <div className="flex gap-0.5">
                                                             {[1, 2, 3, 4, 5].map(s => (
                                                                 <Star 
                                                                     key={s} 

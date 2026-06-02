@@ -1,6 +1,6 @@
 import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { blogApi } from '../../api/blogApi.ts';
+import { blogApi, resolveBlogImageUrl } from '../../api/blogApi.ts';
 import { Card, Spinner, Button, TextArea, Input, TagBadge } from '../ui/index.tsx';
 import { Heart, ThumbsDown, MessageCircle, Eye, Clock, ArrowLeft, Send, User } from 'lucide-react';
 import { format } from 'date-fns';
@@ -137,7 +137,7 @@ export const BlogDetailPage = () => {
 
             <article>
                 {blog.featuredImageUrl && (
-                    <img src={blog.featuredImageUrl} alt={blog.title} className="w-full h-64 md:h-80 object-cover rounded-xl mb-8" />
+                    <img src={resolveBlogImageUrl(blog.featuredImageUrl)} alt={blog.title} className="w-full h-64 md:h-80 object-cover rounded-xl mb-8" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 )}
                 <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-4 leading-tight">{blog.title}</h1>
 

@@ -228,6 +228,8 @@ const DemoForm: React.FC<DemoFormProps> = ({ onSuccess }) => {
       await demoApi.scheduleDemo(demoRequest);
 
       setIsSubmitted(true);
+      setOtpStep(false);
+      setOtp('');
       toast.success('✅ Demo scheduled successfully!');
       setTimeout(() => onSuccess?.(), 3000);
     } catch (error: any) {

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import toast from 'react-hot-toast';
 import { clearActiveApiBaseUrl } from '../api/runtimeApiBase.ts';
 import { adminLogin as apiAdminLogin, loginWithPassword as apiUserLogin, requestUserOTP, verifyUserOTP, logout as apiLogout } from '../api/api/authApi.js';
+import { getMe } from '../api/api/accountApi.js';
 
 type User = {
     id: string;
@@ -40,20 +41,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        try {
-            const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-            const storedRole = localStorage.getItem(ROLE_STORAGE_KEY) as User['role'] | null;
-            if (storedUser && storedRole) {
-                const parsed = JSON.parse(storedUser) as Omit<User, 'role'>;
-                setUser({ ...parsed, role: storedRole });
+        const init = async () => {
+            try {
+                const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+                const storedRole = localStorage.getItem(ROLE_STORAGE_KEY) as User['role'] | null;
+                const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+
+                if (storedUser && storedRole && token) {
+                    try {
+                        const account = await getMe();
+                        if (account) {
+                            const verifiedUser: User = {
+                                id: account.id,
+                                fullName: account.name || account.fullName,
+                                email: account.email,
+                                role: storedRole,
+                            };
+                            setUser(verifiedUser);
+                            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(verifiedUser));
+                            return;
+                        }
+                    } catch {
+                        // Server error — keep localStorage data, don't force logout
+                        const parsed = JSON.parse(storedUser) as Omit<User, 'role'>;
+                        setUser({ ...parsed, role: storedRole });
+                        return;
+                    }
+                }
+            } catch {
+                localStorage.removeItem(USER_STORAGE_KEY);
+                localStorage.removeItem(TOKEN_STORAGE_KEY);
+                localStorage.removeItem(ROLE_STORAGE_KEY);
+            } finally {
+                setIsLoading(false);
             }
-        } catch {
-            localStorage.removeItem(USER_STORAGE_KEY);
-            localStorage.removeItem(TOKEN_STORAGE_KEY);
-            localStorage.removeItem(ROLE_STORAGE_KEY);
-        } finally {
-            setIsLoading(false);
-        }
+        };
+        init();
     }, []);
 
     const login = async (email: string, password: string): Promise<AuthResult> => {

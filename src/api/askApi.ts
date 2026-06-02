@@ -1,7 +1,6 @@
 import { makeApiCall, type QueryRecord } from './runtimeApiBase.ts';
 
 const FORCE_LOCAL_ASK_API = String(import.meta.env.VITE_USE_LOCAL_ASK_API || '').toLowerCase() === 'true';
-const HAS_REMOTE_BASE = Boolean(import.meta.env.VITE_API_BASE_URL);
 const USE_LOCAL_MODE = FORCE_LOCAL_ASK_API;
 
 type AskQuestion = {
@@ -88,20 +87,23 @@ export const askApi = {
             return { data: next };
         }
 
-        try {
-            // Check if /api/questions works for creation, or fallback to admin
-            const data = await makeApiCall<AskQuestion>('POST', '/api/questions', payload);
-            return { data };
-        } catch (error: any) {
-            console.error('Failed to create question via public API, trying admin:', error);
+        const endpoints = [
+            '/api/questions/public',
+            '/api/questions',
+            '/api/admin/questions',
+        ];
+        for (const ep of endpoints) {
             try {
-                const data = await makeApiCall<AskQuestion>('POST', '/api/admin/questions', payload);
+                const data = await makeApiCall<AskQuestion>('POST', ep, payload);
                 return { data };
-            } catch (innerError) {
-                console.error('Admin creation failed too:', innerError);
-                throw innerError;
+            } catch (err: any) {
+                if (ep === endpoints[endpoints.length - 1]) {
+                    throw err;
+                }
+                console.warn(`POST ${ep} failed, trying next:`, err?.status || err?.message);
             }
         }
+        throw new Error('All question creation endpoints failed');
     },
 
     async update(id: string, payload: { title: string; descriptionHtml: string; categoryId: string }) {

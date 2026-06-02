@@ -56,8 +56,9 @@ api.interceptors.response.use(
         console.error('Error data:', error.response?.data);
         console.error('Error message:', error.message);
 
-        if (error.response?.status === 401 || error.response?.status === 403) {
-            // Clear stale auth tokens when the request is unauthorized or forbidden.
+        if (error.response?.status === 401) {
+            // Clear stale auth tokens only on 401 (Unauthorized — token missing/invalid).
+            // NOT on 403 (Forbidden — user exists but lacks permission for that resource).
             localStorage.removeItem('icfy_token');
             localStorage.removeItem('icfy_user');
             localStorage.removeItem('icfy_role');

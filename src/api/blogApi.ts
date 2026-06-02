@@ -282,6 +282,16 @@ export function getIsLocalMode() {
     return FORCE_LOCAL_BLOG_API;
 }
 
+export function resolveBlogImageUrl(imageUrl?: string): string {
+    if (!imageUrl) return '';
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:')) {
+        return imageUrl;
+    }
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.astarclasses.com';
+    const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+    return `${baseUrl.replace(/\/$/, '')}${path}`;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<ApiEnvelope<T>> {
     if (getIsLocalMode()) {
         throw new ApiError('Local blog API mode active', 503, { path, mode: 'local' });

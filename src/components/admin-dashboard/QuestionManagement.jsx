@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { getQuestions, deleteQuestion, updateQuestion } from '../../api/api/questionApi'
+import { getQuestions, createQuestion, deleteQuestion, updateQuestion } from '../../api/api/questionApi'
 import { getAdminAnswers, approveAnswer, rejectAnswer, deleteAnswer } from '../../api/api/answerApi'
 import { getCategories } from '../../api/api/categoryApi'
+import RichDescriptionEditor from '../RichDescriptionEditor'
 import toast from 'react-hot-toast'
-import { Search, Filter, MessageSquare, CheckCircle, XCircle, Trash2, Eye, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
+import { Search, Filter, MessageSquare, CheckCircle, XCircle, Trash2, Eye, ChevronLeft, ChevronRight, AlertCircle, Plus, X } from 'lucide-react'
 
 export default function QuestionManagement() {
   const [questions, setQuestions] = useState([])
@@ -18,6 +19,10 @@ export default function QuestionManagement() {
     totalElements: 0,
     totalPages: 0
   })
+
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createForm, setCreateForm] = useState({ title: '', descriptionHtml: '', categoryId: '' })
+  const [createLoading, setCreateLoading] = useState(false)
 
   const [activeTab, setActiveTab] = useState('questions') // 'questions' or 'answers'
   const [answers, setAnswers] = useState([])
@@ -107,6 +112,32 @@ export default function QuestionManagement() {
     }
   }
 
+  const handleCreateQuestion = async (e) => {
+    e.preventDefault()
+    const titleVal = (createForm.title || '').trim()
+    const descVal = (createForm.descriptionHtml || '').replace(/<[^>]*>/g, '').trim()
+    if (!titleVal || !descVal) {
+      toast.error('Please fill in both title and description')
+      return
+    }
+    setCreateLoading(true)
+    try {
+      await createQuestion({
+        title: titleVal,
+        descriptionHtml: (createForm.descriptionHtml || '').trim(),
+        categoryId: createForm.categoryId || undefined
+      })
+      toast.success('Question created successfully')
+      setShowCreateModal(false)
+      setCreateForm({ title: '', descriptionHtml: '', categoryId: '' })
+      fetchQuestions()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to create question')
+    } finally {
+      setCreateLoading(false)
+    }
+  }
+
   const handleApproveAnswer = async (id) => {
     try {
       await approveAnswer(id)
@@ -160,6 +191,13 @@ export default function QuestionManagement() {
           </h2>
           <p className="text-gray-600 mt-2">Manage student questions and tutor answers</p>
         </div>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg active:scale-95"
+        >
+          <Plus className="w-5 h-5" />
+          Create Question
+        </button>
       </div>
 
       {/* Tabs */}
@@ -333,6 +371,69 @@ export default function QuestionManagement() {
           </div>
         </div>
       </div>
+      {/* Create Question Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between bg-gradient-to-r from-purple-700 to-blue-700 p-6 rounded-t-2xl">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Plus className="w-6 h-6" />
+                Create New Question
+              </h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-white/80 hover:text-white">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateQuestion} className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Category</label>
+                <select
+                  value={createForm.categoryId}
+                  onChange={(e) => setCreateForm(f => ({ ...f, categoryId: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none"
+                >
+                  <option value="">All Categories</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Title</label>
+                <input
+                  value={createForm.title}
+                  onChange={(e) => setCreateForm(f => ({ ...f, title: e.target.value }))}
+                  placeholder="Enter question title"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:ring-2 focus:ring-purple-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Description</label>
+                <RichDescriptionEditor
+                  value={createForm.descriptionHtml}
+                  onChange={(html) => setCreateForm(f => ({ ...f, descriptionHtml: html }))}
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-6 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createLoading}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50"
+                >
+                  {createLoading ? 'Creating...' : 'Create Question'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

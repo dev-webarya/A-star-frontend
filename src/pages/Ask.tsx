@@ -1,8 +1,11 @@
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { askApi } from '../api/askApi';
 import RichDescriptionEditor from '../components/RichDescriptionEditor';
 import { getCategories } from '../api/api/categoryApi';
+import { submitAnswerPublic, getApprovedAnswersByQuestion } from '../api/api/answerApi';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 type Question = {
@@ -16,6 +19,14 @@ type Question = {
     };
 };
 
+type Answer = {
+    id: string;
+    contentHtml: string;
+    authorName: string;
+    createdAt: string;
+    status: string;
+};
+
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
@@ -26,6 +37,11 @@ const Ask: React.FC = () => {
     const [descriptionHtml, setDescriptionHtml] = useState('');
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [answersMap, setAnswersMap] = useState<Record<string, Answer[]>>({});
+    const [answerText, setAnswerText] = useState('');
+    const [answerLoading, setAnswerLoading] = useState(false);
+    const { isAuthenticated } = useAuth();
 
     useEffect(() => {
         fetchData();
@@ -36,10 +52,10 @@ const Ask: React.FC = () => {
         try {
             const [cats, qs] = await Promise.all([
                 getCategories(),
-                askApi.getAll({ page: 0, size: 50 })
+                askApi.getAll({ page: 0, size: 50, sort: 'createdAt', direction: 'desc' })
             ]);
-            setCategories(cats || []);
-            if (cats?.length > 0) setCategoryId(cats[0].id);
+            setCategories(Array.isArray(cats) ? cats : []);
+            if (Array.isArray(cats) && cats.length > 0) setCategoryId(cats[0].id);
             setQuestions(qs.data?.content || []);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -57,14 +73,17 @@ const Ask: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!title.trim() || !descriptionHtml.trim()) {
+        const titleVal = (title || '').trim();
+        const descHtmlVal = (descriptionHtml || '').trim();
+        const descVal = descHtmlVal.replace(/<[^>]*>/g, '').trim();
+        if (!titleVal || !descVal) {
             toast.error('Please fill in both title and description');
             return;
         }
 
         const payload = {
-            title: title.trim(),
-            descriptionHtml: descriptionHtml.trim(),
+            title: titleVal,
+            descriptionHtml: descHtmlVal,
             categoryId
         };
 
@@ -77,14 +96,52 @@ const Ask: React.FC = () => {
             }
         } catch (error: any) {
             console.error('Submit error:', error);
-            const errorMsg = error.response?.data?.message || error.message || 'Failed to submit question';
-            toast.error(`Error: ${errorMsg}`);
+            const isAuthError = error.response?.status === 403 || error.message?.includes('403');
+            const errorMsg = isAuthError
+                ? 'Please log in as admin to submit a question'
+                : (error.response?.data?.message || error.message || 'Failed to submit question');
+            toast.error(errorMsg);
         }
     };
 
-    const updateAnswer = async (id: string, answer: string) => {
-        setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, answer } : q)));
-        await askApi.update(id, { answer, status: 'Answered' });
+    const fetchAnswers = useCallback(async (questionId: string) => {
+        try {
+            const data = await getApprovedAnswersByQuestion(questionId);
+            setAnswersMap(prev => ({ ...prev, [questionId]: Array.isArray(data) ? data : [] }));
+        } catch (error) {
+            console.error('Error fetching answers:', error);
+            setAnswersMap(prev => ({ ...prev, [questionId]: [] }));
+        }
+    }, []);
+
+    const handleToggleExpand = (qId: string) => {
+        if (expandedId === qId) {
+            setExpandedId(null);
+            return;
+        }
+        setExpandedId(qId);
+        setAnswerText('');
+        if (!answersMap[qId]) {
+            fetchAnswers(qId);
+        }
+    };
+
+    const handleSubmitAnswer = async (qId: string) => {
+        if (!answerText.trim()) {
+            toast.error('Please write your answer');
+            return;
+        }
+        setAnswerLoading(true);
+        try {
+            await submitAnswerPublic({ questionId: qId, contentHtml: answerText.trim() });
+            toast.success('Answer submitted for review!');
+            setAnswerText('');
+            fetchAnswers(qId);
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || error.message || 'Failed to submit answer');
+        } finally {
+            setAnswerLoading(false);
+        }
     };
 
     // Function to render LaTeX equations in HTML (Mirroring editor logic for display)
@@ -106,7 +163,6 @@ const Ask: React.FC = () => {
         return result;
     };
 
-    // (navigation removed)
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-12 overflow-x-hidden">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -175,20 +231,79 @@ const Ask: React.FC = () => {
                         ) : (
                             <div className="space-y-6">
                                 {questions.map((q) => (
-                                    <div key={q.id} className="border border-blue-200 rounded-xl p-4 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 transition-colors">
-                                        <div className="flex flex-wrap items-start justify-between gap-2">
-                                            <div>
-                                                <div className="text-sm font-semibold text-blue-800">{q.title || 'Untitled question'}</div>
-                                                <div className="text-xs text-blue-600">
-                                                    {q.category?.name} • {new Date(q.createdAt).toLocaleString()}
+                                    <div key={q.id} className="border border-blue-200 rounded-xl overflow-hidden">
+                                        <div
+                                            className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 transition-colors cursor-pointer"
+                                            onClick={() => handleToggleExpand(q.id)}
+                                        >
+                                            <div className="flex flex-wrap items-start justify-between gap-2">
+                                                <div className="flex-1">
+                                                    <div className="text-sm font-semibold text-blue-800">{q.title || 'Untitled question'}</div>
+                                                    <div className="text-xs text-blue-600">
+                                                        {q.category?.name} • {new Date(q.createdAt).toLocaleString()}
+                                                    </div>
                                                 </div>
+                                                <span className="text-xs text-blue-500 font-medium shrink-0">
+                                                    {expandedId === q.id ? '▲ Collapse' : '▼ Answer'}
+                                                </span>
+                                            </div>
+                                            <div
+                                                className="mt-3 text-sm text-blue-900 prose prose-sm max-w-none"
+                                            >
+                                                <div dangerouslySetInnerHTML={{ __html: renderMathInHTML(q.descriptionHtml) }} />
                                             </div>
                                         </div>
-                                        <div 
-                                            className="mt-3 text-sm text-blue-900 prose prose-sm max-w-none"
-                                        >
-                                            <div dangerouslySetInnerHTML={{ __html: renderMathInHTML(q.descriptionHtml) }} />
-                                        </div>
+
+                                        {expandedId === q.id && (
+                                            <div className="border-t border-blue-100 bg-white">
+                                                {/* Existing Answers */}
+                                                {answersMap[q.id] && answersMap[q.id].length > 0 && (
+                                                    <div className="p-4 space-y-3 bg-blue-50/50">
+                                                        <h4 className="text-xs font-bold text-blue-700 uppercase tracking-wider">Answers ({answersMap[q.id].length})</h4>
+                                                        {answersMap[q.id].map((a) => (
+                                                            <div key={a.id} className="bg-white rounded-lg p-3 border border-blue-100 shadow-sm">
+                                                                <div className="text-xs text-gray-500 mb-1">
+                                                                    {a.authorName || 'Student'} • {new Date(a.createdAt).toLocaleString()}
+                                                                </div>
+                                                                <div className="prose prose-xs max-w-none text-sm text-gray-800"
+                                                                    dangerouslySetInnerHTML={{ __html: renderMathInHTML(a.contentHtml) }}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Answer Form */}
+                                                <div className="p-4 border-t border-blue-100">
+                                                    <h4 className="text-xs font-bold text-purple-700 uppercase tracking-wider mb-2">Submit Your Answer</h4>
+                                                    {isAuthenticated ? (
+                                                        <>
+                                                            <RichDescriptionEditor
+                                                                value={answerText}
+                                                                onChange={setAnswerText}
+                                                            />
+                                                            <button
+                                                                onClick={() => handleSubmitAnswer(q.id)}
+                                                                disabled={answerLoading}
+                                                                className="mt-2 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50"
+                                                            >
+                                                                {answerLoading ? 'Submitting...' : 'Submit Answer'}
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <div className="bg-blue-50 rounded-lg p-4 text-center">
+                                                            <p className="text-sm text-blue-700 mb-2">Please log in to submit an answer</p>
+                                                            <Link
+                                                                to="/login"
+                                                                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all"
+                                                            >
+                                                                Login
+                                                            </Link>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

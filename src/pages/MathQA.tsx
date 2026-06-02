@@ -30,7 +30,7 @@ const MathQA: React.FC = () => {
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      const data = await getQuestions({ page: 0, size: 50 });
+      const data = await getQuestions({ page: 0, size: 50, sort: 'createdAt', direction: 'desc' });
       const apiQuestions = data.content || [];
       
       // For each question, we might want to know if it's closed
@@ -140,7 +140,6 @@ const MathQA: React.FC = () => {
           <QuestionModal
             question={selected}
             fullQuestion={selectedFull}
-            isOpen={!!selected}
             onClose={handleCloseModal}
             onSubmitSolution={handleSubmitSolution}
             solutions={solutions[selected.id] || []}

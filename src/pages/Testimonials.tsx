@@ -200,7 +200,7 @@ const Testimonials = () => {
               {/* Authenticity Statement */}
               <div className="max-w-4xl mx-auto mb-12 p-6 bg-blue-50 rounded-xl shadow-md border border-blue-100">
                 <p className="text-base text-blue-900 leading-relaxed mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  <span className="font-bold">Dear Parents and Students,</span> Trust and authenticity are at the heart of everything we do. All testimonials displayed here are 100% genuine and have been provided by real students and parents. None of them is AI-generated, fake, edited, or modified in any manner.
+                  Dear Parents and Students, Trust and authenticity are at the heart of everything we do. All testimonials displayed here are 100% genuine and have been provided by real students and parents. None of them is AI-generated, fake, edited, or modified in any manner.
                 </p>
                 <p className="text-base text-blue-900 leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
                   We invite you to click on each testimonial to view the original feedback. We also welcome any further verification to reassure you of the authenticity of every testimonial shared here.

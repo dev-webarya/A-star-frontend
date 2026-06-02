@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { X, Maximize2, Minimize2, Eye, Edit2, Plus, Link as LinkIcon, AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Quote, Code, Highlighter, CheckSquare } from 'lucide-react';
@@ -16,6 +16,7 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
     const [modalContent, setModalContent] = useState(value);
 
     const [isHtmlMode, setIsHtmlMode] = useState(false);
+    const modalEditorRef = useRef<HTMLDivElement>(null);
 
     const editor = useEditor({
         extensions: [
@@ -46,10 +47,11 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
     useEffect(() => {
         if (isModalOpen) {
             setModalContent(editor?.getHTML() || value);
-            // Focus the editor after a short delay to ensure DOM is ready
-            setTimeout(() => {
+            // Focus the editor after a delay to ensure DOM and animations are ready
+            const focusTimer = setTimeout(() => {
                 editor?.commands.focus();
-            }, 100);
+            }, 350);
+            return () => clearTimeout(focusTimer);
         }
     }, [isModalOpen, editor, value]);
 
@@ -272,21 +274,21 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
             <div className="flex flex-wrap gap-1 bg-gradient-to-r from-gray-50 to-gray-100 p-2 rounded-t-lg border-b border-gray-300 items-center">
                 {/* Text Styling */}
                 <div className="flex items-center gap-0.5 bg-white rounded-md border border-gray-200 p-0.5 shadow-sm">
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); editor.chain().focus().toggleBold().run(); }}
                         className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${editor.isActive('bold') ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
                         title="Bold (Ctrl+B)"
                     >
                         <strong>B</strong>
                     </button>
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); editor.chain().focus().toggleItalic().run(); }}
                         className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${editor.isActive('italic') ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
                         title="Italic (Ctrl+I)"
                     >
                         <em>I</em>
                     </button>
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); editor.chain().focus().toggleStrike().run(); }}
                         className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${editor.isActive('strike') ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
                         title="Strikethrough"
@@ -299,21 +301,21 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
 
                 {/* Headings */}
                 <div className="flex items-center gap-0.5 bg-white rounded-md border border-gray-200 p-0.5 shadow-sm">
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); editor.chain().focus().toggleHeading({ level: 1 }).run(); }}
                         className={`px-2 py-1 rounded text-xs font-bold transition-colors ${editor.isActive('heading', { level: 1 }) ? 'bg-purple-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                         title="H1"
                     >
                         H1
                     </button>
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); editor.chain().focus().toggleHeading({ level: 2 }).run(); }}
                         className={`px-2 py-1 rounded text-xs font-bold transition-colors ${editor.isActive('heading', { level: 2 }) ? 'bg-purple-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                         title="H2"
                     >
                         H2
                     </button>
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); editor.chain().focus().toggleHeading({ level: 3 }).run(); }}
                         className={`px-2 py-1 rounded text-xs font-bold transition-colors ${editor.isActive('heading', { level: 3 }) ? 'bg-purple-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                         title="H3"
@@ -326,28 +328,28 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
 
                 {/* Lists & Blocks */}
                 <div className="flex items-center gap-0.5 bg-white rounded-md border border-gray-200 p-0.5 shadow-sm">
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); editor.chain().focus().toggleBulletList().run(); }}
                         className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${editor.isActive('bulletList') ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
                         title="Bullet List"
                     >
                         <List className="h-4 w-4" />
                     </button>
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); editor.chain().focus().toggleOrderedList().run(); }}
                         className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${editor.isActive('orderedList') ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
                         title="Ordered List"
                     >
                         <ListOrdered className="h-4 w-4" />
                     </button>
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); editor.chain().focus().toggleBlockquote().run(); }}
                         className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${editor.isActive('blockquote') ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
                         title="Blockquote"
                     >
                         <Quote className="h-4 w-4" />
                     </button>
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); editor.chain().focus().toggleCodeBlock().run(); }}
                         className={`p-1.5 rounded hover:bg-gray-100 transition-colors ${editor.isActive('codeBlock') ? 'bg-purple-100 text-purple-700' : 'text-gray-600'}`}
                         title="Code Block"
@@ -360,7 +362,7 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
 
                 {/* Math & Symbols */}
                 <div className="flex items-center gap-1">
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); insertSymbol('\\frac{a}{b}', true, true); }}
                         className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-white text-purple-700 hover:bg-purple-50 transition-colors border border-purple-200 font-bold shadow-sm"
                         title="Insert Fraction"
@@ -380,7 +382,7 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
 
                 {/* Clear & Expand */}
                 <div className="flex items-center gap-1">
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); editor.chain().focus().clearNodes().unsetAllMarks().run(); }}
                         className="p-1.5 rounded text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
                         title="Clear Formatting"
@@ -389,7 +391,7 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
                     </button>
 
                     {!hideExpand && (
-                        <button
+                        <button type="button"
                             onClick={(e) => { e.preventDefault(); setIsModalOpen(true); }}
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md active:scale-95"
                             title="Open in full-screen"
@@ -431,7 +433,7 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
                                 </div>
                                 <p className="text-purple-700 font-semibold text-lg">Editor is active in full-screen</p>
                                 <p className="text-purple-500 text-sm">Please complete your editing in the modal window</p>
-                                <button 
+                                <button type="button"
                                     onClick={(e) => { e.preventDefault(); setIsModalOpen(true); }}
                                     className="mt-2 px-6 py-2 bg-purple-600 text-white rounded-full text-sm font-bold hover:bg-purple-700 transition-all shadow-lg active:scale-95"
                                 >
@@ -448,7 +450,7 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
                 )}
 
                 <div className="flex items-center gap-2 mt-3">
-                    <button
+                    <button type="button"
                         onClick={(e) => { e.preventDefault(); setIsPreviewMode(!isPreviewMode); }}
                         className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl transition-all shadow-md active:scale-95 ${
                             isPreviewMode 
@@ -470,7 +472,7 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
                     </button>
                     
                     {!isModalOpen && (
-                        <button
+                        <button type="button"
                             onClick={(e) => { e.preventDefault(); setIsModalOpen(true); }}
                             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all active:scale-95"
                         >
@@ -496,7 +498,7 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
                                     <p className="text-purple-100 text-xs font-medium opacity-80 uppercase tracking-widest">Mathematical & Rich Text Support</p>
                                 </div>
                             </div>
-                            <button
+                            <button type="button"
                                 onClick={() => setIsModalOpen(false)}
                                 className="rounded-full p-2 text-white/80 hover:bg-white/20 hover:text-white transition-all focus:outline-none active:scale-90"
                             >
@@ -510,7 +512,7 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
                                 {/* Mode Toggle */}
                                 <div className="flex items-center justify-between bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
                                     <div className="flex items-center gap-2 p-1 bg-gray-100 rounded-xl">
-                                        <button
+                                        <button type="button"
                                             onClick={() => setIsPreviewMode(false)}
                                             className={`inline-flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${!isPreviewMode
                                                 ? 'bg-white text-purple-700 shadow-sm'
@@ -520,7 +522,7 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
                                             <Edit2 className="h-4 w-4" />
                                             Edit
                                         </button>
-                                        <button
+                                        <button type="button"
                                             onClick={() => setIsPreviewMode(true)}
                                             className={`inline-flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all ${isPreviewMode
                                                 ? 'bg-white text-purple-700 shadow-sm'
@@ -535,7 +537,7 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
                                     {!isPreviewMode && (
                                         <div className="flex items-center gap-3">
                                             <span className="text-xs font-black text-gray-400 uppercase tracking-tighter">Advanced Mode:</span>
-                                            <button
+                                            <button type="button"
                                                 onClick={() => {
                                                     if (isHtmlMode) {
                                                         editor.commands.setContent(modalContent);
@@ -566,7 +568,11 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
                                         ) : (
                                             <div className="flex-1 flex flex-col bg-white border-2 border-purple-100 rounded-3xl overflow-hidden shadow-xl">
                                                 <EditorToolbar hideExpand={true} />
-                                                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                                                <div
+                                                    ref={modalEditorRef}
+                                                    className="flex-1 overflow-y-auto p-4 custom-scrollbar cursor-text"
+                                                    onClick={() => editor?.commands.focus()}
+                                                >
                                                     <EditorContent
                                                         editor={editor}
                                                         className="prose prose-sm md:prose-base max-w-none focus:outline-none min-h-full pb-20 pointer-events-auto"
@@ -640,13 +646,13 @@ const RichDescriptionEditor: React.FC<RichDescriptionEditorProps> = ({ value, on
                                 <span className="text-xs font-bold uppercase tracking-wider">Live Editing Active</span>
                             </div>
                             <div className="flex items-center gap-4">
-                                <button
+                                <button type="button"
                                     onClick={() => setIsModalOpen(false)}
                                     className="px-6 py-3 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors"
                                 >
                                     Cancel
                                 </button>
-                                <button
+                                <button type="button"
                                     onClick={handleModalDone}
                                     className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 px-10 py-4 text-white font-black text-sm uppercase tracking-widest hover:from-purple-700 hover:to-indigo-700 transition-all shadow-xl hover:shadow-purple-200 active:scale-95"
                                 >

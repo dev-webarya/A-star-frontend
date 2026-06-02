@@ -190,17 +190,27 @@ export default function TestimonialManagement() {
     }
   };
 
-  const handleSetPrimary = async (id) => {
+  const handleSetPrimary = async (id, wasPrimary, testimonial) => {
     setActionLoading(id);
     try {
-      console.log('Setting primary testimonial:', id);
-      await setPrimaryTestimonial(id);
+      if (wasPrimary) {
+        console.log('Unsetting primary testimonial:', id);
+        await updateTestimonial(id, {
+          text: testimonial.text || testimonial.message || testimonial.quote || testimonial.content || '',
+          mediaUrl: testimonial.mediaUrl || testimonial.videoUrl || testimonial.image || '',
+          primary: false
+        });
+        toast.success('Primary unset');
+      } else {
+        console.log('Setting primary testimonial:', id);
+        await setPrimaryTestimonial(id);
+        toast.success('Testimonial set as primary');
+      }
       // Re-fetch to get actual primary status from backend
       await fetchTestimonials();
-      toast.success('Testimonial set as primary');
     } catch (error) {
-      console.error('Error setting primary testimonial:', error);
-      toast.error('Failed to set primary testimonial');
+      console.error('Error updating primary:', error);
+      toast.error(wasPrimary ? 'Failed to unset primary' : 'Failed to set primary testimonial');
     } finally {
       setActionLoading(null);
     }
@@ -465,22 +475,22 @@ export default function TestimonialManagement() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-start gap-2">
                         <button
-                          onClick={() => handleSetPrimary(id)}
+                          onClick={() => handleSetPrimary(id, t.primary, t)}
                           disabled={actionLoading === id}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 ${t.primary ? 'bg-indigo-600' : 'bg-indigo-400'} text-white rounded-lg hover:bg-indigo-500 transition-all disabled:opacity-50 text-[10px] font-bold shadow-sm whitespace-nowrap`}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 min-w-[118px] justify-center ${t.primary ? 'bg-indigo-600' : 'bg-indigo-400'} text-white rounded-lg hover:bg-indigo-500 transition-all disabled:opacity-50 text-[10px] font-bold shadow-sm whitespace-nowrap`}
                         >
-                          <Star size={12} fill={t.primary ? "white" : "none"} /> {t.primary ? 'PRIMARY' : 'SET PRIMARY'}
+                          <Star size={12} fill={t.primary ? "white" : "none"} /> {t.primary ? 'UNSET PRIMARY' : 'SET PRIMARY'}
                         </button>
                         <button
                           onClick={() => handleEdit(t)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all text-[10px] font-bold shadow-sm whitespace-nowrap"
+                          className="flex items-center gap-1.5 px-3 py-1.5 min-w-[60px] justify-center bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all text-[10px] font-bold shadow-sm whitespace-nowrap"
                         >
                           <Edit size={12} /> EDIT
                         </button>
                         <button
                           onClick={() => handleDelete(id)}
                           disabled={actionLoading === id}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all disabled:opacity-50 text-[10px] font-bold shadow-sm whitespace-nowrap"
+                          className="flex items-center gap-1.5 px-3 py-1.5 min-w-[72px] justify-center bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all disabled:opacity-50 text-[10px] font-bold shadow-sm whitespace-nowrap"
                         >
                           <Trash2 size={12} /> DELETE
                         </button>

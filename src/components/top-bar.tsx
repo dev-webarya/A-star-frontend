@@ -14,12 +14,12 @@ const TopBar = () => {
         <div className="flex items-center gap-6">
           {/* Phone Icon */}
           <a
-            href="tel:8073982848"
-            className="inline-flex items-center gap-1 hover:text-[#FFD600] transition"
+            href="tel:+918861919000"
+            className="inline-flex items-center gap-2 hover:text-[#FFD600] transition"
             title="Call us"
           >
             <Phone className="h-6 w-6" />
-            <span className="text-sm font-medium hidden xl:inline">+91-886 191 9000</span>
+            <span className="text-sm font-medium hidden md:inline">+91 886 191 9000</span>
           </a>
 
           {/* WhatsApp Icon */}
@@ -27,11 +27,11 @@ const TopBar = () => {
             href="https://wa.me/918073982848"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-green-400 hover:text-green-300 transition"
+            className="inline-flex items-center gap-2 text-green-400 hover:text-green-300 transition"
             title="WhatsApp us"
           >
             <FaWhatsapp className="h-6 w-6" />
-            <span className="text-sm font-medium hidden xl:inline">+91-807 398 2848</span>
+            <span className="text-sm font-medium hidden md:inline">+91 807 398 2848</span>
           </a>
         </div>
 
@@ -91,9 +91,15 @@ const TopBar = () => {
       {open && (
         <div className="md:hidden bg-[#003366] border-t border-[#002244] px-4 py-3">
           <div className="space-y-3 max-w-md">
-            <div className="flex gap-4 pb-3 border-b border-[#002244]">
-              <a href="tel:8073982848" className="flex-1 text-center text-[#FFD600] font-bold text-xs">☎️ Call</a>
-              <a href="https://wa.me/918073982848" target="_blank" rel="noopener noreferrer" className="flex-1 text-center text-[#FFD600] font-bold text-xs">💬 WhatsApp</a>
+            <div className="grid grid-cols-2 gap-3 pb-3 border-b border-[#002244] text-xs">
+              <a href="tel:+918861919000" className="flex flex-col items-center justify-center rounded-lg bg-white/10 px-3 py-2 text-[#FFD600] font-bold">
+                <span>📞 Call</span>
+                <span className="mt-1 text-[11px] font-medium">+91 886 191 9000</span>
+              </a>
+              <a href="https://wa.me/918073982848" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center rounded-lg bg-white/10 px-3 py-2 text-[#FFD600] font-bold">
+                <span>💬 WhatsApp</span>
+                <span className="mt-1 text-[11px] font-medium">+91 807 398 2848</span>
+              </a>
             </div>
             <Link to="/demoform" className="block bg-[#0056b3] text-white px-3 py-2 rounded text-xs font-semibold text-center">Schedule Demo</Link>
             <a href="https://www.ixpoe.com/ixpoe/feepay" target="_blank" rel="noopener noreferrer" className="block bg-[#d5a928] text-white px-3 py-2 rounded text-xs font-semibold text-center">Pay Fees</a>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Edit, Save, X, Search, UserPlus, Filter, CheckCircle, AlertCircle, Upload, Image as ImageIcon, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -19,6 +19,25 @@ export default function TutorManagement() {
     const [uploading, setUploading] = useState(false);
     const [modalTutor, setModalTutor] = useState(null);
     const [expandedTutorIds, setExpandedTutorIds] = useState([]);
+    const [resizeModal, setResizeModal] = useState(null);
+    const [resizeDimensions, setResizeDimensions] = useState({ width: 800, height: 800 });
+    const [resizePreview, setResizePreview] = useState(null);
+    const canvasRef = useRef(null);
+    useEffect(() => {
+        if (!resizePreview || !canvasRef.current) return;
+        const img = new Image();
+        img.src = resizePreview;
+        img.onload = () => {
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            canvas.width = resizeDimensions.width;
+            canvas.height = resizeDimensions.height;
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+    }, [resizePreview, resizeDimensions]);
     const [formData, setFormData] = useState({
         fullName: '',
         mainSubject: '',
@@ -59,7 +78,7 @@ export default function TutorManagement() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const resizeImage = (file) => {
+    const resizeImage = (file, targetWidth, targetHeight) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -68,26 +87,31 @@ export default function TutorManagement() {
                 img.src = event.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    const MAX_HEIGHT = 800;
-                    let width = img.width;
-                    let height = img.height;
+                    let width = targetWidth || img.width;
+                    let height = targetHeight || img.height;
 
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
+                    const MAX_SIZE = 800;
+                    if (!targetWidth || !targetHeight) {
+                        width = img.width;
+                        height = img.height;
+                        if (width > height) {
+                            if (width > MAX_SIZE) {
+                                height *= MAX_SIZE / width;
+                                width = MAX_SIZE;
+                            }
+                        } else {
+                            if (height > MAX_SIZE) {
+                                width *= MAX_SIZE / height;
+                                height = MAX_SIZE;
+                            }
                         }
                     }
 
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
                     ctx.drawImage(img, 0, 0, width, height);
                     
                     canvas.toBlob((blob) => {
@@ -96,7 +120,7 @@ export default function TutorManagement() {
                             lastModified: Date.now(),
                         });
                         resolve(resizedFile);
-                    }, 'image/jpeg', 0.9);
+                    }, 'image/jpeg', 0.92);
                 };
             };
         });
@@ -111,13 +135,29 @@ export default function TutorManagement() {
             return;
         }
 
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                setResizeModal(file);
+                setResizePreview(event.target.result);
+                setResizeDimensions({ width: img.width, height: img.height });
+            };
+        };
+    };
+
+    const handleResizeConfirm = async () => {
+        if (!resizeModal) return;
         setUploading(true);
         const uploadToast = toast.loading('Resizing and uploading image...');
         try {
-            // Client-side resize before upload
-            const resizedFile = await resizeImage(file);
+            const resizedFile = await resizeImage(resizeModal, resizeDimensions.width, resizeDimensions.height);
             const imageUrl = await uploadToCloudinary(resizedFile);
             setFormData(prev => ({ ...prev, photoUrl: imageUrl }));
+            setResizeModal(null);
+            setResizePreview(null);
             toast.success('Image processed and uploaded', { id: uploadToast });
         } catch (error) {
             console.error('Upload error:', error);
@@ -346,6 +386,118 @@ export default function TutorManagement() {
                             </button>
                         </div>
                     </form>
+                </div>
+            )}
+
+            {/* Resize Modal */}
+            {resizeModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setResizeModal(null)} />
+                    <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-800">Resize Photo</h3>
+                            <button type="button" onClick={() => setResizeModal(null)} className="text-gray-400 hover:text-gray-600">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Preview After Resize</p>
+                                    <div className="rounded-xl overflow-hidden bg-gray-50 border border-gray-200 flex items-center justify-center" style={{ height: '16rem' }}>
+                                        <canvas ref={canvasRef} className="max-w-full max-h-full object-contain" />
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 mt-1 text-center">{resizeDimensions.width} × {resizeDimensions.height} px</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Resize Options</p>
+                                    <div className="space-y-3">
+                                        <p className="text-xs text-gray-400">Select a preset or set custom dimensions:</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setResizeDimensions({ width: 300, height: 300 })}
+                                                className={`px-3 py-2 rounded-lg text-xs font-semibold border transition ${
+                                                    resizeDimensions.width === 300 && resizeDimensions.height === 300
+                                                        ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-blue-300'
+                                                }`}
+                                            >
+                                                Small (300×300)
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setResizeDimensions({ width: 512, height: 512 })}
+                                                className={`px-3 py-2 rounded-lg text-xs font-semibold border transition ${
+                                                    resizeDimensions.width === 512 && resizeDimensions.height === 512
+                                                        ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-blue-300'
+                                                }`}
+                                            >
+                                                Square (512×512)
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setResizeDimensions({ width: 800, height: 800 })}
+                                                className={`px-3 py-2 rounded-lg text-xs font-semibold border transition ${
+                                                    resizeDimensions.width === 800 && resizeDimensions.height === 800
+                                                        ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-blue-300'
+                                                }`}
+                                            >
+                                                Square (800×800)
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setResizeDimensions({ width: 400, height: 500 })}
+                                                className={`px-3 py-2 rounded-lg text-xs font-semibold border transition ${
+                                                    resizeDimensions.width === 400 && resizeDimensions.height === 500
+                                                        ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-blue-300'
+                                                }`}
+                                            >
+                                                Passport (2×2.5)
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3 pt-2">
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-500 mb-1">Width (px)</label>
+                                                <input
+                                                    type="number"
+                                                    min="50"
+                                                    max="2000"
+                                                    value={resizeDimensions.width}
+                                                    onChange={(e) => setResizeDimensions(prev => ({ ...prev, width: Number(e.target.value) }))}
+                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium text-gray-500 mb-1">Height (px)</label>
+                                                <input
+                                                    type="number"
+                                                    min="50"
+                                                    max="2000"
+                                                    value={resizeDimensions.height}
+                                                    onChange={(e) => setResizeDimensions(prev => ({ ...prev, height: Number(e.target.value) }))}
+                                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                        <div className="flex justify-end gap-3 p-6 border-t border-gray-100 bg-gray-50">
+                            <button type="button" onClick={() => setResizeModal(null)} className="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition font-medium text-sm">
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleResizeConfirm}
+                                disabled={uploading}
+                                className="px-8 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition shadow-md flex items-center gap-2 text-sm font-medium disabled:opacity-50"
+                            >
+                                <Upload size={16} /> {uploading ? 'Uploading...' : 'Resize & Upload'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

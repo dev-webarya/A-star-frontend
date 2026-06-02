@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import MathEditor from './MathEditor';
 import SolutionList from './SolutionList';
 import { Question } from './QuestionList';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 
 interface QuestionModalProps {
   question: Question;
@@ -11,21 +13,38 @@ interface QuestionModalProps {
   solutions: { user: string; latex: string }[];
 }
 
+const renderMathInHTML = (html: string): string => {
+  if (!html) return '';
+  let result = html;
+  result = result.replace(/\$\$([^$]+)\$\$/g, (match, formula) => {
+    try {
+      return `<div class="math-block py-4 overflow-x-auto">${katex.renderToString(formula.trim(), { throwOnError: false, displayMode: true })}</div>`;
+    } catch { return match; }
+  });
+  result = result.replace(/(?<!\$)\$([^$]+)\$(?!\$)/g, (match, formula) => {
+    try {
+      return `<span class="math-inline px-1">${katex.renderToString(formula.trim(), { throwOnError: false, displayMode: false })}</span>`;
+    } catch { return match; }
+  });
+  return result;
+};
+
 const QuestionModal: React.FC<QuestionModalProps> = ({ question, fullQuestion, onClose, onSubmitSolution, solutions }) => {
+  const renderedHtml = useMemo(() => renderMathInHTML(fullQuestion?.descriptionHtml || ''), [fullQuestion]);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto">
       <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 relative my-8">
         <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl" onClick={onClose}>&times;</button>
         <h2 className="text-2xl font-bold text-indigo-700 mb-2">{question.title}</h2>
         
-        {fullQuestion?.descriptionHtml && (
+        {renderedHtml && (
           <div 
             className="mb-4 text-gray-700 prose prose-indigo max-w-none"
-            dangerouslySetInnerHTML={{ __html: fullQuestion.descriptionHtml }}
+            dangerouslySetInnerHTML={{ __html: renderedHtml }}
           />
         )}
         
-        {!fullQuestion?.descriptionHtml && (
+        {!renderedHtml && (
           <div className="mb-4 text-gray-700">{question.description}</div>
         )}
 

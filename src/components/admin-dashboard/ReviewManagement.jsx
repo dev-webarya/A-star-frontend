@@ -9,7 +9,7 @@ export default function ReviewManagement() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [actionLoading, setActionLoading] = useState(null);
   const [viewModal, setViewModal] = useState(null);
-  const [pagination, setPagination] = useState({ page: 0, size: 10, totalPages: 0, totalElements: 0 });
+  const [pagination, setPagination] = useState({ page: 0, size: 100, totalPages: 0, totalElements: 0 });
 
   // Fetch reviews from API
   useEffect(() => {

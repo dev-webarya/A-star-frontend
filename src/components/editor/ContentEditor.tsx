@@ -3,8 +3,10 @@ import {
     Bold, Italic, Underline, Strikethrough, Heading1, Heading2, Heading3,
     List, ListOrdered, Code, Quote, Link as LinkIcon, Image as ImageIcon,
     Minus, Eye, Edit3, AlignLeft, AlignCenter, AlignRight, ImageOff, Undo, Redo,
-    Type
+    Type, Loader2
 } from 'lucide-react';
+import { uploadToCloudinary } from '../../utils/cloudinaryUpload';
+import toast from 'react-hot-toast';
 
 type ToolbarAction = {
     key: string;
@@ -70,6 +72,7 @@ export const ContentEditor = ({ initialContent, onChange }: ContentEditorProps) 
     const [linkText, setLinkText] = useState('');
     const [savedSelection, setSavedSelection] = useState<Range | null>(null);
     const [wordCount, setWordCount] = useState(0);
+    const [uploadingImage, setUploadingImage] = useState(false);
 
     // Restore content into editor when switching back to edit mode
     useEffect(() => {
@@ -314,18 +317,41 @@ export const ContentEditor = ({ initialContent, onChange }: ContentEditorProps) 
         setImageAlt('');
     };
 
-    const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const dataUrl = event.target?.result;
-            if (typeof dataUrl === 'string') {
+        setUploadingImage(true);
+        const toastId = 'editor-upload';
+        toast.loading('Processing image...', { id: toastId });
+
+        try {
+            const cloudinaryUrl = await uploadToCloudinary(file);
+            setImageUrl(cloudinaryUrl);
+            toast.success('Image uploaded!', { id: toastId });
+        } catch {
+            // Cloudinary failed — fall back to base64
+            try {
+                const dataUrl = await readFileAsDataUrl(file);
                 setImageUrl(dataUrl);
+                toast.success('Image added (local)', { id: toastId });
+            } catch {
+                toast.error('Failed to load image', { id: toastId });
             }
-        };
-        reader.readAsDataURL(file);
+        }
+        setUploadingImage(false);
+    };
+
+    const readFileAsDataUrl = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                if (typeof reader.result === 'string') resolve(reader.result);
+                else reject(new Error('Failed to read file'));
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+        });
     };
 
     const handleInsertLink = () => {
@@ -478,8 +504,11 @@ export const ContentEditor = ({ initialContent, onChange }: ContentEditorProps) 
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-text-secondary mb-1.5">Upload Image</label>
-                                <input type="file" accept="image/*" onChange={handleImageFileSelect}
-                                    className="w-full text-xs text-text-tertiary file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-bg-tertiary file:text-text-secondary hover:file:bg-bg-hover cursor-pointer" />
+                                <div className="flex items-center gap-3">
+                                    <input type="file" accept="image/*" onChange={handleImageFileSelect} disabled={uploadingImage}
+                                        className="w-full text-xs text-text-tertiary file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-bg-tertiary file:text-text-secondary hover:file:bg-bg-hover cursor-pointer disabled:opacity-50" />
+                                    {uploadingImage && <Loader2 className="w-5 h-5 animate-spin text-text-tertiary shrink-0" />}
+                                </div>
                             </div>
                             
                             <div className="relative py-2 flex items-center">
@@ -506,8 +535,10 @@ export const ContentEditor = ({ initialContent, onChange }: ContentEditorProps) 
                             )}
                         </div>
                         <div className="flex justify-end gap-2 mt-6">
-                            <button type="button" onClick={() => setShowImageDialog(false)} className="btn-secondary text-sm py-2 px-4 min-h-0 min-w-0">Cancel</button>
-                            <button type="button" onClick={handleInsertImage} disabled={!imageUrl.trim()} className="btn-primary text-sm py-2 px-6 min-h-0 min-w-0 disabled:opacity-40">Insert</button>
+                            <button type="button" onClick={() => setShowImageDialog(false)} disabled={uploadingImage} className="btn-secondary text-sm py-2 px-4 min-h-0 min-w-0">Cancel</button>
+                            <button type="button" onClick={handleInsertImage} disabled={!imageUrl.trim() || uploadingImage} className="btn-primary text-sm py-2 px-6 min-h-0 min-w-0 disabled:opacity-40">
+                                {uploadingImage ? 'Uploading...' : 'Insert'}
+                            </button>
                         </div>
                     </div>
                 </div>

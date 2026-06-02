@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { blogApi, getIsLocalMode } from '../../api/blogApi.ts';
 import { Card, Input, TextArea, Button } from '../ui/index.tsx';
 import { ContentEditor } from '../editor/ContentEditor';
-import { PenTool, Mail, CheckCircle, ArrowRight, Save, Upload, X, Image as ImageIcon, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { PenTool, Mail, CheckCircle, ArrowRight, Save, X, Image as ImageIcon, ArrowLeft } from 'lucide-react';
+import { uploadToCloudinary } from '../../utils/cloudinaryUpload';
 import toast from 'react-hot-toast';
 
 const DRAFT_KEY = 'blogpost_draft';
@@ -51,7 +52,6 @@ export const SubmitBlogPage = () => {
     const [otp, setOtp] = useState('');
     const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-    const [imageLoading, setImageLoading] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
     const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -247,41 +247,55 @@ export const SubmitBlogPage = () => {
         e.target.value = '';
     };
 
-    const processImageFile = (file: File) => {
-        // Validate file type
+    const processImageFile = async (file: File) => {
         if (!file.type.startsWith('image/')) {
             toast.error(`"${file.name}" is not a valid image file`);
             return;
         }
 
-        // Validate file size (max 5MB)
         const fileSizeMB = file.size / (1024 * 1024);
         if (fileSizeMB > 5) {
             toast.error(`"${file.name}" is ${fileSizeMB.toFixed(1)}MB. Max allowed is 5MB`);
             return;
         }
 
-        setImageLoading(true);
+        const toastId = `upload-${Date.now()}`;
+        toast.loading(`Processing ${file.name}...`, { id: toastId });
 
-        // Convert to base64/data URL
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const dataUrl = event.target?.result;
-            if (typeof dataUrl === 'string') {
+        try {
+            const url = await uploadToCloudinary(file);
+            setImagePreviews(prev => {
+                const next = [...prev, url];
+                setFormData(f => ({ ...f, featuredImageUrl: next.join(',') }));
+                return next;
+            });
+            toast.success(`Image uploaded!`, { id: toastId });
+        } catch {
+            // Cloudinary failed — fall back to base64
+            try {
+                const dataUrl = await readFileAsDataUrl(file);
                 setImagePreviews(prev => {
                     const next = [...prev, dataUrl];
                     setFormData(f => ({ ...f, featuredImageUrl: next.join(',') }));
                     return next;
                 });
-                toast.success(`Image added!`);
+                toast.success(`Image added (local)`, { id: toastId });
+            } catch {
+                toast.error(`Failed to process ${file.name}`, { id: toastId });
             }
-            setImageLoading(false);
-        };
-        reader.onerror = () => {
-            toast.error('Failed to read image file');
-            setImageLoading(false);
-        };
-        reader.readAsDataURL(file);
+        }
+    };
+
+    const readFileAsDataUrl = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                if (typeof reader.result === 'string') resolve(reader.result);
+                else reject(new Error('Failed to read file'));
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+        });
     };
 
     const handleUrlChange = (url: string) => {

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { blogApi } from '../../api/blogApi.ts';
+import { blogApi, resolveBlogImageUrl } from '../../api/blogApi.ts';
 import { Card, Spinner, Button, Pagination, TagBadge } from '../ui/index.tsx';
 import { Heart, MessageCircle, Eye, Search, Filter, Calendar, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
@@ -148,7 +148,7 @@ export const BlogListPage = () => {
                         {blogs.map((blog) => (
                             <Link to={`/blog/${blog.slug}`} key={blog.id}>
                                 <Card hover className="h-full">
-                                    {blog.featuredImageUrl && <img src={blog.featuredImageUrl} alt={blog.title} className="w-full h-44 object-cover rounded-lg mb-4" />}
+                                    {blog.featuredImageUrl && <img src={resolveBlogImageUrl(blog.featuredImageUrl)} alt={blog.title} className="w-full h-44 object-cover rounded-lg mb-4" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
                                     <div className="space-y-3">
                                         <h3 className="text-lg font-semibold text-text-primary line-clamp-2">{blog.title}</h3>
                                         <p className="text-text-secondary text-sm line-clamp-2">{blog.excerpt}</p>

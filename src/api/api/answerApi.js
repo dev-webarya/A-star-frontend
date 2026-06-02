@@ -35,6 +35,24 @@ export const submitAnswer = async (data) => {
 };
 
 /**
+ * Anyone (no auth required) submits an answer. Goes to PENDING moderation.
+ * Falls back to authenticated endpoint if public one doesn't exist yet.
+ * @param {Object} data - { questionId, contentHtml }
+ */
+export const submitAnswerPublic = async (data) => {
+  try {
+    const response = await api.post('/api/answers/public', data);
+    return response.data;
+  } catch (error) {
+    // If 404 or 403, public endpoint doesn't exist — try authenticated endpoint
+    if (error.response?.status === 404 || error.response?.status === 403) {
+      return submitAnswer(data);
+    }
+    throw error.response?.data || error;
+  }
+};
+
+/**
  * Media Signature Endpoint
  */
 

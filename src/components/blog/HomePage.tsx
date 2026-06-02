@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { blogApi } from '../../api/blogApi.ts';
+import { blogApi, resolveBlogImageUrl } from '../../api/blogApi.ts';
 import { Card, Spinner, TagBadge } from '../ui/index.tsx';
 import { Clock, Heart, MessageCircle, Eye, ArrowRight, Feather, Mail } from 'lucide-react';
 import { format } from 'date-fns';
@@ -93,7 +93,7 @@ export const HomePage = () => {
                                     <Link to={`/blog/${blog.slug}`} key={blog.id}>
                                         <Card hover className="h-full rounded-[1.75rem] border border-border-secondary p-0 shadow-[0_18px_50px_rgba(9,22,49,0.08)] transition-transform hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(9,22,49,0.12)]">
                                             {blog.featuredImageUrl && (
-                                                <img src={blog.featuredImageUrl} alt={blog.title} className="h-52 w-full rounded-t-[1.75rem] object-cover" />
+                                                <img src={resolveBlogImageUrl(blog.featuredImageUrl)} alt={blog.title} className="h-52 w-full rounded-t-[1.75rem] object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                             )}
                                             <div className="space-y-4 p-6">
                                                 <h3 className="line-clamp-2 text-xl font-extrabold tracking-[-0.03em] text-text-primary">{blog.title}</h3>
@@ -119,7 +119,7 @@ export const HomePage = () => {
                                     <div key={blog.id}>
                                         <Card className="h-full rounded-[1.75rem] border border-border-secondary p-0 opacity-90 shadow-[0_18px_50px_rgba(9,22,49,0.08)]">
                                             {blog.featuredImageUrl && (
-                                                <img src={blog.featuredImageUrl} alt={blog.title} className="h-52 w-full rounded-t-[1.75rem] object-cover" />
+                                                <img src={resolveBlogImageUrl(blog.featuredImageUrl)} alt={blog.title} className="h-52 w-full rounded-t-[1.75rem] object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                             )}
                                             <div className="space-y-4 p-6">
                                                 <h3 className="line-clamp-2 text-xl font-extrabold tracking-[-0.03em] text-text-primary">{blog.title}</h3>
