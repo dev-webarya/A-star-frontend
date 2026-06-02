@@ -227,7 +227,7 @@ const Testimonials = () => {
 
                   // Determine media type for the icon
                   let mediaUrl = testimonial.mediaUrl || testimonial.content || testimonial.image;
-                  
+
                   // Fallback for specific students if media is missing
                   if (!mediaUrl) {
                     if (studentName.toLowerCase().includes('sanjana')) mediaUrl = whatsappImageUrls.sanjana;
@@ -237,8 +237,8 @@ const Testimonials = () => {
                     else if (studentName.toLowerCase().includes('pradyumna')) mediaUrl = whatsappImageUrls.pradyumna;
                     else if (studentName.toLowerCase().includes('rhea') || studentName.toLowerCase().includes('thea') || studentName.toLowerCase().includes('ojal')) mediaUrl = whatsappImageUrls.rheaTheaOjal;
                     else if (studentName.toLowerCase().includes('siddhant')) {
-                        if (testimonial.subject?.toLowerCase().includes('physics') || testimonial.subject?.toLowerCase().includes('chemistry')) mediaUrl = whatsappImageUrls.siddhantPC;
-                        else mediaUrl = whatsappImageUrls.siddhantML;
+                      if (testimonial.subject?.toLowerCase().includes('physics') || testimonial.subject?.toLowerCase().includes('chemistry')) mediaUrl = whatsappImageUrls.siddhantPC;
+                      else mediaUrl = whatsappImageUrls.siddhantML;
                     }
                     else if (studentName.toLowerCase().includes('thanya')) mediaUrl = whatsappImageUrls.thanya;
                   }
@@ -271,10 +271,10 @@ const Testimonials = () => {
                       </div>
 
                       {/* Content Overlay */}
-                      <div className="relative h-full flex flex-col p-6 pb-4 justify-between z-10">
+                      <div className="relative h-full flex flex-col px-6 pt-10 pb-4 justify-between z-10">
                         {/* Primary Badge */}
                         {testimonial.primary && (
-                          <div className="absolute top-4 left-4 flex items-center gap-1 bg-[#ffb800] text-white px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg z-20">
+                          <div className="absolute top-3 left-4 flex items-center gap-2 bg-[#ffb800] text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/30 shadow-xl z-20">
                             <Star size={12} className="fill-white" />
                             <span>Primary</span>
                           </div>
@@ -366,8 +366,8 @@ const Testimonials = () => {
                     else if (studentName.toLowerCase().includes('pradyumna')) url = whatsappImageUrls.pradyumna;
                     else if (studentName.toLowerCase().includes('rhea') || studentName.toLowerCase().includes('thea') || studentName.toLowerCase().includes('ojal')) url = whatsappImageUrls.rheaTheaOjal;
                     else if (studentName.toLowerCase().includes('siddhant')) {
-                        if (active.subject?.toLowerCase().includes('physics') || active.subject?.toLowerCase().includes('chemistry')) url = whatsappImageUrls.siddhantPC;
-                        else url = whatsappImageUrls.siddhantML;
+                      if (active.subject?.toLowerCase().includes('physics') || active.subject?.toLowerCase().includes('chemistry')) url = whatsappImageUrls.siddhantPC;
+                      else url = whatsappImageUrls.siddhantML;
                     }
                     else if (studentName.toLowerCase().includes('thanya')) url = whatsappImageUrls.thanya;
                   }
